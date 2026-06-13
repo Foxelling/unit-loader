@@ -14,18 +14,14 @@ const FetchAI = () => extend(AIController, {
             this.unit.clearItem();
         }
 
-        // --- НОВЫЙ АЛГОРИТМ ПОИСКА ---
         let targetBuilding = null;
         let minDist = Number.MAX_VALUE;
         
-        // Получаем список всех хранилищ команды (ядра, контейнеры, хранилища)
         let storages = Vars.indexer.getFlagged(this.unit.team, BlockFlag.storage);
         
         if (storages != null) {
             storages.each(build => {
-                // Если в хранилище есть нужный предмет
                 if (build.items != null && build.items.has(targetItem)) {
-                    // Вычисляем квадрат расстояния (dst2 работает быстрее обычного dst)
                     let dist = this.unit.dst2(build); 
                     if (dist < minDist) {
                         minDist = dist;
@@ -34,7 +30,6 @@ const FetchAI = () => extend(AIController, {
                 }
             });
         }
-        // -----------------------------
 
         if (targetBuilding != null) {
             if (!this.unit.within(targetBuilding, 20)) {
@@ -57,17 +52,13 @@ const FetchAI = () => extend(AIController, {
 
 Events.on(EventType.ClientLoadEvent, cons(e => {
     
-    // ФИКС ЛОКАЛИЗАЦИИ: Английский текст
     Core.bundle.getProperties().put("command.fetch", "Fetch Item");
     
     let modIcon = Core.atlas.find("unit-loader-fetch-icon");
     Icon.icons.put("custom-fetch", new Packages.arc.scene.style.TextureRegionDrawable(modIcon));
 
-    // ФИКС МЕНЮ: Теперь мы ловим момент, когда игра выдает юнту этот ИИ
     let fetchCommand = new UnitCommand("fetch", "custom-fetch", u => {
-        
-        // Открываем меню ТОЛЬКО если игрок сейчас держит этого юнита выделенным рамкой.
-        // Задержка Time.time нужна, чтобы меню открылось 1 раз, а не 10 раз для каждого из 10 выделенных юнитов.
+    
         if (Vars.control.input.selectedUnits.contains(u) && Time.time - lastDialogTime > 30) {
             lastDialogTime = Time.time;
             itemDialog.show();
