@@ -9,6 +9,7 @@ let lastDialogTime = 0;
 let fetchCommand = null;
 let commandRegistered = false;
 let packetHandlerRegistered = false;
+let lastFetchDialogKey = "";
 
 const cons2 = method => new Cons2(){get: method};
 
@@ -51,10 +52,48 @@ function registerPacketHandler() {
     }));
 }
 
+function isLocalCommander(unit) {
+    return Vars.player != null && unit.lastCommanded != null && unit.lastCommanded.equals(Vars.player.coloredName());
+}
+
+function isFetchCommand(command) {
+    return command != null && command.name != null && command.name.equals("fetch");
+}
+
+function unitHasFetchCommand(unit) {
+    let controller = unit.controller();
+    if (!(controller instanceof CommandAI)) return false;
+
+    return isFetchCommand(controller.currentCommand());
+}
+
 function showItemDialogFor(unit) {
     if (Vars.headless || itemDialog == null || Vars.control == null || Vars.control.input == null) return;
 
-    if (Vars.control.input.selectedUnits.contains(unit) && Time.time - lastDialogTime > 30) {
+    let localSelection = !Vars.net.active() && Vars.control.input.selectedUnits.contains(unit);
+    if ((isLocalCommander(unit) || localSelection) && Time.time - lastDialogTime > 30) {
+        lastDialogTime = Time.time;
+        itemDialog.show();
+    }
+}
+
+function checkFetchDialogTrigger() {
+    if (Vars.headless || itemDialog == null || Vars.control == null || Vars.control.input == null) return;
+
+    let key = "";
+    Vars.control.input.selectedUnits.each(unit => {
+        if (unitHasFetchCommand(unit) && isLocalCommander(unit)) {
+            key += unit.id + ",";
+        }
+    });
+
+    if (key.length === 0) {
+        lastFetchDialogKey = "";
+        return;
+    }
+
+    if (key !== lastFetchDialogKey && Time.time - lastDialogTime > 30) {
+        lastFetchDialogKey = key;
         lastDialogTime = Time.time;
         itemDialog.show();
     }
@@ -122,6 +161,7 @@ function registerFetchCommand() {
     fetchCommand.drawTarget = true;
     fetchCommand.resetTarget = false;
     fetchCommand.switchToMove = true;
+    fetchCommand.refreshOnSelect = true;
 
     Vars.content.units().each(type => {
         if (type.itemCapacity > 0 && type.flying) {
@@ -167,4 +207,8 @@ Events.on(EventType.ClientLoadEvent, cons(e => {
     Icon.icons.put("custom-fetch", new Packages.arc.scene.style.TextureRegionDrawable(modIcon));
 
     buildItemDialog();
+}));
+
+Events.run(Trigger.update, run(() => {
+    checkFetchDialogTrigger();
 }));
