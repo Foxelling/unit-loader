@@ -3,6 +3,6 @@ displayName: Unit Loader
 description: Adds a "Fetch Item" command for units. Select any resource from a visual pop-up menu, and your flying units will automatically retrieve it from the nearest core or storage
 author: Foxel
 
-version: 1.0
+version: 1.2
 minGameVersion: 154
 repo: Foxelling/unit-loader
