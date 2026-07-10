@@ -1,4 +1,4 @@
-# Unit Loader Mod
+# Unit Loader
 
 A utility automation mod that introduces a dedicated RTS unit command, allowing players to order flying units to fetch specific resources from any nearby storage block.
 
